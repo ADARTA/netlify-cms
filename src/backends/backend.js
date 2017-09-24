@@ -1,7 +1,8 @@
 import { attempt, isError } from 'lodash';
 import TestRepoBackend from "./test-repo/implementation";
 import GitHubBackend from "./github/implementation";
-import GitGatewayBackend from "./git-gateway/implementation";
+import GitLabBackend from "./gitlab/implementation";
+import GitGatewayBackend  from "./git-gateway/implementation";
 import { resolveFormat } from "../formats/formats";
 import { selectListMethod, selectEntrySlug, selectEntryPath, selectAllowNewEntries, selectFolderEntryExtension } from "../reducers/collections";
 import { createEntry } from "../valueObjects/Entry";
@@ -88,11 +89,11 @@ class Backend {
   }
 
   logout() {
-    return Promise.resolve(this.implementation.logout()).then(() => {
-      if (this.authStore) {
-        this.authStore.logout();
-      }
-    });
+    if (this.authStore) {
+      this.authStore.logout();
+    } else {
+      throw new Error("User isn't authenticated.");
+    }
   }
 
   getToken = () => this.implementation.getToken();
@@ -292,8 +293,10 @@ export function resolveBackend(config) {
       return new Backend(new TestRepoBackend(config), authStore);
     case "github":
       return new Backend(new GitHubBackend(config), authStore);
-    case "git-gateway":
-      return new Backend(new GitGatewayBackend(config), authStore);
+    case "gitlab":
+      return new Backend(new GitLabBackend(config), authStore);
+    case "netlify-auth":
+      return new Backend(new GitGatewayBackend (config), authStore);
     default:
       throw new Error(`Backend not found: ${ name }`);
   }
